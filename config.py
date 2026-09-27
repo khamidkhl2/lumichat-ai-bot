@@ -23,7 +23,7 @@ class ChatBotConfig:
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_PRIMARY_MODEL: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     GROQ_FALLBACK_MODEL: str = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
-    GROQ_MAX_TOKENS: int = int(os.getenv("GROQ_MAX_TOKENS", "2048"))
+    GROQ_MAX_TOKENS: int = int(os.getenv("GROQ_MAX_TOKENS", "750"))
     GROQ_TEMPERATURE: float = float(os.getenv("GROQ_TEMPERATURE", "0.7"))
 
     # Memory / Conversation Context

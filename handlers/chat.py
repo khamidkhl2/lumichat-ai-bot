@@ -15,16 +15,17 @@ from shared.keyboards.common import get_sponsor_inline_keyboard, get_vip_inline_
 from services.memory_service import memory_service
 from services.personas import get_user_persona, get_persona_info
 from services.groq_service import groq_service
+from services.telegram_formatter import format_telegram_html
 from keyboards.inline import get_chat_actions_keyboard
 
 logger = logging.getLogger(__name__)
 router = Router()
 
 CLEAR_CONFIRMATIONS = {
-    "en": "🧹 <b>Conversation memory cleared!</b>\nNexaChat is ready for a new topic.",
-    "ru": "🧹 <b>Память диалога очищена!</b>\nNexaChat готов к новой теме.",
-    "uz": "🧹 <b>Suhbat xotirasi tozalandi!</b>\nNexaChat yangi mavzuni muhokama qilishga tayyor.",
-    "es": "🧹 <b>¡Memoria de la conversación borrada!</b>\nNexaChat está listo para un nuevo tema."
+    "en": "🧹 <b>Conversation memory cleared!</b>\nLumiChat is ready for a fresh topic.",
+    "ru": "🧹 <b>Память диалога очищена!</b>\nLumiChat готов к новой теме.",
+    "uz": "🧹 <b>Suhbat xotirasi tozalandi!</b>\nLumiChat yangi mavzuni muhokama qilishga tayyor.",
+    "es": "🧹 <b>¡Memoria de la conversación borrada!</b>\nLumiChat está listo para un nuevo tema."
 }
 
 @router.message(Command("clear"))
@@ -34,7 +35,7 @@ async def cmd_clear_memory(message: Message):
     user = await db.get_user(user_id)
     lang = user.get("language", "en") if user else "en"
 
-    memory_service.clear_history(user_id)
+    await memory_service.clear_history(user_id)
     msg = CLEAR_CONFIRMATIONS.get(lang, CLEAR_CONFIRMATIONS["en"])
     await message.answer(msg, parse_mode="HTML")
 
@@ -44,15 +45,15 @@ async def callback_clear_memory(callback: CallbackQuery):
     user = await db.get_user(user_id)
     lang = user.get("language", "en") if user else "en"
 
-    memory_service.clear_history(user_id)
+    await memory_service.clear_history(user_id)
     msg = CLEAR_CONFIRMATIONS.get(lang, CLEAR_CONFIRMATIONS["en"])
     await callback.message.answer(msg, parse_mode="HTML")
     await callback.answer("Memory cleared!")
 
 async def _send_safe_response(message: Message, text: str, lang: str = "en"):
     """
-    Sends message safely, splitting into chunks if > 4000 chars,
-    and falling back to plain text if Markdown/HTML parsing fails.
+    Sends response using Telegram HTML parse mode. Splits message if > 4000 characters,
+    and falls back to plain text if HTML parsing encounters any unexpected issue.
     """
     max_chunk = 4000
     chunks = [text[i:i + max_chunk] for i in range(0, len(text), max_chunk)] if len(text) > max_chunk else [text]
@@ -61,15 +62,15 @@ async def _send_safe_response(message: Message, text: str, lang: str = "en"):
         is_last = (idx == len(chunks) - 1)
         kb = get_chat_actions_keyboard(lang) if is_last else None
         try:
-            # First try sending as Markdown
-            await message.answer(chunk, reply_markup=kb, parse_mode="Markdown")
-        except TelegramBadRequest:
+            # Send using HTML formatting
+            await message.answer(chunk, reply_markup=kb, parse_mode="HTML")
+        except TelegramBadRequest as e:
+            logger.warning(f"HTML send failed ({e}), falling back to plain text")
             try:
-                # If markdown fails, try HTML
-                await message.answer(chunk, reply_markup=kb, parse_mode="HTML")
-            except TelegramBadRequest:
-                # Fallback to plain text
+                # Strip HTML tags or send plain text
                 await message.answer(chunk, reply_markup=kb, parse_mode=None)
+            except Exception as e2:
+                logger.error(f"Plain text send also failed: {e2}")
 
 @router.message(F.text & ~F.text.startswith("/"))
 async def handle_user_chat(message: Message):
@@ -108,12 +109,12 @@ async def handle_user_chat(message: Message):
     await message.bot.send_chat_action(chat_id=message.chat.id, action=ChatAction.TYPING)
 
     # 5. Retrieve active persona and conversation history
-    persona_id = get_user_persona(user_id)
+    persona_id = await get_user_persona(user_id)
     persona_info = get_persona_info(persona_id)
     system_prompt = persona_info["system_prompt"]
 
-    history = memory_service.get_history(user_id)
-    # Add new user message to temporary history payload for Groq
+    history = await memory_service.get_history(user_id)
+    # Add new user message to history payload for Groq
     query_messages = list(history)
     query_messages.append({"role": "user", "content": message.text})
 
@@ -124,16 +125,19 @@ async def handle_user_chat(message: Message):
         user_lang=lang
     )
 
-    # 7. Update in-memory sliding window
-    memory_service.add_user_message(user_id, message.text)
-    memory_service.add_assistant_message(user_id, ai_reply)
+    # 7. Update sliding window & DB persistence
+    await memory_service.add_user_message(user_id, message.text)
+    await memory_service.add_assistant_message(user_id, ai_reply)
 
-    # 8. Append subtle cross-promotion tip footer
+    # 8. Format raw AI response into clean Telegram HTML
+    formatted_reply = format_telegram_html(ai_reply)
+
+    # 9. Append subtle cross-promotion tip footer (in native HTML)
     tip = cross_promo.get_tip_footer("chat", lang=lang)
-    full_response = ai_reply + (tip if tip else "")
+    full_response = formatted_reply + (tip if tip else "")
 
-    # 9. Send response safely
+    # 10. Send response safely
     await _send_safe_response(message, full_response, lang=lang)
 
-    # 10. Increment daily usage counter in database
+    # 11. Increment daily usage counter in database
     await db.increment_daily_usage(user_id, "chat")

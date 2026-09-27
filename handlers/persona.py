@@ -19,7 +19,7 @@ router = Router()
 PERSONA_MENU_TITLES = {
     "en": (
         "🎭 <b>Select AI Persona & Specialization:</b>\n\n"
-        "Choose how NexaChat should act and respond to you:\n\n"
+        "Choose how LumiChat should act and respond to you:\n\n"
         "• <b>General Assistant:</b> Smart daily tasks & brainstorming\n"
         "• <b>Homework Tutor:</b> Step-by-step math & science mentor\n"
         "• <b>Senior Developer:</b> Clean code, architecture & debugging\n"
@@ -29,7 +29,7 @@ PERSONA_MENU_TITLES = {
     ),
     "ru": (
         "🎭 <b>Выберите персонажа и специализацию ИИ:</b>\n\n"
-        "Выберите, в какой роли NexaChat будет отвечать вам:\n\n"
+        "Выберите, в какой роли LumiChat будет отвечать вам:\n\n"
         "• <b>Умный помощник:</b> Повседневные вопросы и идеи\n"
         "• <b>Репетитор:</b> Пошаговое объяснение математики и уроков\n"
         "• <b>Senior Разработчик:</b> Качественный код, алгоритмы и баги\n"
@@ -39,7 +39,7 @@ PERSONA_MENU_TITLES = {
     ),
     "uz": (
         "🎭 <b>AI qiyofasi va yo'nalishini tanlang:</b>\n\n"
-        "NexaChat sizga qaysi rolda javob berishini xohlaysiz:\n\n"
+        "LumiChat sizga qaysi rolda javob berishini xohlaysiz:\n\n"
         "• <b>Aqlli Yordamchi:</b> Umumiy savollar va g'oyalar\n"
         "• <b>O'qituvchi:</b> Matematika va fanlarni bosqichma-bosqich yechish\n"
         "• <b>Senior Dasturchi:</b> Mukammal kod, arxitektura va xatolar tahlili\n"
@@ -49,7 +49,7 @@ PERSONA_MENU_TITLES = {
     ),
     "es": (
         "🎭 <b>Selecciona la Especialidad del Asistente:</b>\n\n"
-        "Elige cómo quieres que responda NexaChat:\n\n"
+        "Elige cómo quieres que responda LumiChat:\n\n"
         "• <b>Asistente General:</b> Preguntas diarias y redacción\n"
         "• <b>Tutor:</b> Explicaciones paso a paso de matemáticas y tareas\n"
         "• <b>Desarrollador Senior:</b> Código limpio, arquitectura y depuración\n"
@@ -64,7 +64,7 @@ async def cmd_persona(message: Message):
     user_id = message.from_user.id
     user = await db.get_user(user_id)
     lang = user.get("language", "en") if user else "en"
-    current_persona = get_user_persona(user_id)
+    current_persona = await get_user_persona(user_id)
 
     title = PERSONA_MENU_TITLES.get(lang, PERSONA_MENU_TITLES["en"])
     kb = get_persona_inline_keyboard(current_persona, lang=lang)
@@ -75,7 +75,7 @@ async def callback_open_personas(callback: CallbackQuery):
     user_id = callback.from_user.id
     user = await db.get_user(user_id)
     lang = user.get("language", "en") if user else "en"
-    current_persona = get_user_persona(user_id)
+    current_persona = await get_user_persona(user_id)
 
     title = PERSONA_MENU_TITLES.get(lang, PERSONA_MENU_TITLES["en"])
     kb = get_persona_inline_keyboard(current_persona, lang=lang)
@@ -89,7 +89,7 @@ async def callback_set_persona(callback: CallbackQuery):
     user = await db.get_user(user_id)
     lang = user.get("language", "en") if user else "en"
 
-    set_user_persona(user_id, persona_id)
+    await set_user_persona(user_id, persona_id)
     info = get_persona_info(persona_id)
     name = get_persona_name(persona_id, lang=lang)
     desc = get_persona_desc(persona_id, lang=lang)
