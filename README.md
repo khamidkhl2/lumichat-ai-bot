@@ -1,38 +1,43 @@
-# 🧠 NexaChat — AI Smart Assistant & Companion
+# 🧠 LumiChat — AI Smart Assistant & Companion
 
-**NexaChat** is an ultra-fast, conversational AI Telegram bot powered by the **100% free Groq Cloud API** using `llama-3.3-70b-versatile` (with automatic fallback to `llama-3.1-8b-instant`).
+**LumiChat** ([@lumichat_ai_bot](https://t.me/lumichat_ai_bot)) is an ultra-fast, conversational AI Telegram bot powered by the **100% free Groq Cloud API** using `openai/gpt-oss-120b` (with automatic fallback to `openai/gpt-oss-20b`).
 
-It includes 5 specialized personas, sliding window conversation memory, daily free usage limits with Telegram Stars monetization, viral referral mechanics, mandatory sponsor channel verification, and sister-bot cross-promotion.
+It features 5 specialized personas, persistent SQLite multi-turn conversation memory, mobile-optimized Telegram HTML formatting, daily free usage limits with Telegram Stars monetization, viral referral mechanics, mandatory sponsor channel verification, and sister-bot cross-promotion.
 
 ---
 
 ## 🌟 Key Features
 
 1. **Lightning-Fast AI (Groq)**:
-   - Primary model: `llama-3.3-70b-versatile`
-   - Fallback model: `llama-3.1-8b-instant`
+   - Primary model: `openai/gpt-oss-120b`
+   - Fallback model: `openai/gpt-oss-20b`
    - Zero cost: Powered by free Groq Cloud API keys.
 
-2. **In-Memory Sliding Window**:
-   - Maintains the last 10 messages of context per user.
-   - Users can reset memory anytime using `/new` or `/clear` or inline buttons.
+2. **Persistent Multi-Turn Sessions**:
+   - Maintains conversation context across serverless Lambda invocations using SQLite (`/tmp/shared_empire.db`).
+   - Users can reset memory anytime using `/new`, `/clear`, or the inline button `🧹 Clear Memory`.
 
-3. **5 Specialized AI Personas**:
+3. **Telegram-Native Mobile Formatting**:
+   - Prompt engineering restricts responses to 2–4 concise, direct, high-value sections.
+   - Built-in `telegram_formatter.py` intercepts raw Markdown tables and renders clean bullet points.
+   - Sent via native Telegram HTML so italic tips and code blocks format cleanly.
+
+4. **5 Specialized AI Personas**:
    - 🧠 **General Assistant**: Daily inquiries, brainstorming, research.
-   - 📚 **Homework & Math Tutor**: Step-by-step Socratic explanations of math and science.
+   - 📚 **Homework & Math Tutor**: Step-by-step problem solver.
    - 💻 **Senior Developer / Code Expert**: Clean code generation, debugging, algorithms, architecture.
    - 🌍 **Polyglot Translator**: Nuanced translations across 50+ languages preserving tone and idioms.
    - ✨ **Creative Storyteller**: Rich storytelling, worldbuilding, scripts, and poetry.
    - Switchable dynamically via `/persona` or inline buttons.
 
-4. **Monetization & Viral Growth**:
-   - **Daily Free Quota**: 15 messages/day for regular users via `db.check_daily_quota(user_id, 'chat', 15)` and `db.increment_daily_usage(user_id, 'chat')`.
-   - **Telegram Stars VIP**: Users can purchase a 30-day VIP pass for unlimited requests and ad-free experience.
+5. **Monetization & Viral Growth**:
+   - **Daily Free Quota**: 15 messages/day for regular users via `db.check_daily_quota(user_id, 'chat', 15)`.
+   - **Telegram Stars VIP**: 30-day VIP pass for unlimited requests and ad-free experience.
    - **Referral System**: Users invite 3 friends to get 30 days of VIP free.
    - **Sponsor Gating**: Mandatory subscription check via `sponsor_service.check_user_subscription`.
-   - **Cross-Promotion**: Subtle tip footers (`cross_promo.get_tip_footer('chat', lang)`) and `/bots` network directory.
+   - **Cross-Promotion**: Subtle tip footers promoting sister bots (`@velo_save_bot` and `@VoxifyVoiceBot`).
 
-5. **Multi-Language Interface**:
+6. **Multi-Language Interface**:
    - English 🇬🇧, Russian 🇷🇺, Uzbek 🇺🇿, Spanish 🇪🇸.
 
 ---
