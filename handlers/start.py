@@ -12,6 +12,7 @@ from keyboards.inline import (
     get_language_inline_keyboard,
     get_vip_inline_keyboard
 )
+from shared.keyboards.common import get_advertise_inline_keyboard
 from services.personas import get_user_persona, get_persona_name
 
 logger = logging.getLogger(__name__)
@@ -260,3 +261,31 @@ async def cmd_bots(message: Message):
     kb = cross_promo.get_bots_keyboard(current_bot_id="chat", lang=lang)
     title = t("bots_menu_title", lang=lang)
     await message.answer(title, reply_markup=kb, parse_mode="HTML")
+
+@router.callback_query(F.data == "open_bots_menu")
+async def callback_open_bots_menu(callback: CallbackQuery):
+    user = await db.get_user(callback.from_user.id)
+    lang = user.get("language", "en") if user else "en"
+    kb = cross_promo.get_bots_keyboard(current_bot_id="chat", lang=lang)
+    title = t("bots_menu_title", lang=lang)
+    await callback.message.answer(title, reply_markup=kb, parse_mode="HTML")
+    await callback.answer()
+
+@router.message(Command("advertise"))
+@router.message(Command("sponsor"))
+async def cmd_advertise(message: Message):
+    user = await db.get_user(message.from_user.id)
+    lang = user.get("language", "en") if user else "en"
+    text = t("advertise_title", lang=lang)
+    kb = get_advertise_inline_keyboard(lang=lang)
+    await message.answer(text, reply_markup=kb, parse_mode="HTML")
+
+@router.callback_query(F.data == "open_advertise")
+async def callback_open_advertise(callback: CallbackQuery):
+    user = await db.get_user(callback.from_user.id)
+    lang = user.get("language", "en") if user else "en"
+    text = t("advertise_title", lang=lang)
+    kb = get_advertise_inline_keyboard(lang=lang)
+    await callback.message.answer(text, reply_markup=kb, parse_mode="HTML")
+    await callback.answer()
+
