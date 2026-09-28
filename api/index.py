@@ -35,8 +35,10 @@ def get_dispatcher():
         from handlers.persona import router as persona_router
         from handlers.sponsor_gate import router as sponsor_gate_router
         from handlers.chat import router as chat_router
+        from shared.handlers.admin_common import admin_router
 
         _dp = Dispatcher()
+        _dp.include_router(admin_router)
         _dp.include_router(start_router)
         _dp.include_router(persona_router)
         _dp.include_router(sponsor_gate_router)
